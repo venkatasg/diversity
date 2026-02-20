@@ -7,9 +7,10 @@ from tqdm import tqdm
 from .patterns import token_patterns, get_pos, pos_patterns
 from nltk.tokenize import sent_tokenize
 
-def extract_patterns(text: List[str], 
+def extract_patterns(text: List[str],
                      n: int = 5,
-                     top_n: int = 100
+                     top_n: int = 100,
+                     lang: Optional[str] = None,
 ) -> dict:
     """ Extracts text and part-of-speech patterns from text input. 
         Used to return a dictionary of patterns and the corresponding text match. 
@@ -17,6 +18,8 @@ def extract_patterns(text: List[str],
         text (List[str]): List of strings to extract patterns from.
         n (int, optional): N-gram size. Defaults to 5.
         top_n (int, optional): Number of top patterns to extract. Defaults to 100.
+        lang (str, optional): BCP-47 / ISO 639-1 language code for POS tagging (e.g. 'en').
+            When None the language is detected automatically from the corpus.
     Returns:
         dict: Dictionary of patterns and their corresponding text.
 
@@ -46,7 +49,7 @@ def extract_patterns(text: List[str],
     patterns_token  =  token_patterns(outputs, n)
 
     # get the part-of-speech patterns (only include top_n patterns)
-    joined_pos, tuples  =  get_pos(outputs)
+    joined_pos, tuples  =  get_pos(outputs, lang=lang)
     ngrams_pos  =  token_patterns(joined_pos, n, top_n)
 
     # for the top n-gram patterns, cycle through and get the matching text

@@ -13,6 +13,7 @@ rouge-score = "^0.1.2"
 evaluate = "^0.4.1"
 sentence-transformers = "^5.1.0"
 transformers = "^4.41.0"
+stanza = "^1.9"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"
