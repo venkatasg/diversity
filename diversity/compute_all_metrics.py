@@ -9,7 +9,7 @@ from .compression import compression_ratio
 from .homogenization import homogenization_score
 from .ngram_diversity import ngram_diversity_score
 from .self_repetition import self_repetition_score
-from .embedding import remote_clique, chamfer_dist
+from .embedding import remote_clique, chamfer_dist, mauve_score
 from .template import template_rate, templates_per_token
 from .functions import extract_patterns
 
@@ -24,25 +24,28 @@ def compute_all_metrics(
     self_repetition_n: int = 4,
     template_shard_size: int = 500,
     verbose: bool = True,
-    batch_size: int = 64
+    batch_size: int = 64,
+    reference_corpus: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Computes all available diversity metrics for a corpus of text.
-    
+
     Args:
-        corpus (List[str]): List of text documents to analyze
-        output_format (str): Format for output - "dict", "markdown", or "latex"
-        embedding_model (str): Model to use for embedding-based metrics
-        homogenization_measure (str): Measure for homogenization score ("rougel", "bertscore", "bleu")
-        compression_algorithm (str): Algorithm for compression ratio ("gzip", "xz")
-        ngram_n (int): Maximum n-gram size for n-gram diversity
-        self_repetition_n (int): N-gram size for self-repetition score
-        template_shard_size (int): Shard size for template processing
-        verbose (bool): Whether to show progress messages
-        batch_size (int): Batch size for embedding computations
-    
+        corpus (List[str]): List of text documents to analyze.
+        output_format (str): Format for output - "dict", "markdown", or "latex".
+        embedding_model (str): Model to use for embedding-based metrics.
+        homogenization_measure (str): Measure for homogenization score ("rougel", "bertscore", "bleu").
+        compression_algorithm (str): Algorithm for compression ratio ("gzip", "xz").
+        ngram_n (int): Maximum n-gram size for n-gram diversity.
+        self_repetition_n (int): N-gram size for self-repetition score.
+        template_shard_size (int): Shard size for template processing.
+        verbose (bool): Whether to show progress messages.
+        batch_size (int): Batch size for embedding computations.
+        reference_corpus (List[str], optional): Reference texts (e.g. human-written) used
+            to compute the MAUVE score against *corpus*. When None, MAUVE is skipped.
+
     Returns:
-        Dict[str, Any]: Dictionary containing all computed metrics and formatted table if requested
+        Dict[str, Any]: Dictionary containing all computed metrics and formatted table if requested.
     """
     
     if verbose:
@@ -98,6 +101,23 @@ def compute_all_metrics(
             print(f"⚠️  Warning: Could not compute embedding metrics - {e}")
         results["remote_clique_score"] = None
         results["chamfer_distance"] = None
+
+    # MAUVE score (requires a reference corpus)
+    if reference_corpus is not None:
+        if verbose:
+            print(f"Computing MAUVE score using {embedding_model}...")
+        try:
+            results["mauve"] = mauve_score(
+                p_text=reference_corpus,
+                q_text=corpus,
+                model=embedding_model,
+                verbose=verbose,
+                batch_size=batch_size,
+            )
+        except Exception as e:
+            if verbose:
+                print(f"⚠️  Warning: Could not compute MAUVE score - {e}")
+            results["mauve"] = None
     
     # Template-based metrics
     if verbose:
