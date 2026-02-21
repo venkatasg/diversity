@@ -23,6 +23,7 @@
   - [Embedding-Based Diversity Measures](#embedding-based-diversity-measures)
     - [`remote_clique`](#remote_cliquedata-modelqwenqwen3-embedding-06b-verbo-true-batch_size64)
     - [`chamfer_dist`](#chamfer_distdata-modelqwenqwen3-embedding-06b-verbo-true-batch_size64)
+    - [`mauve_score`](#mauve_scorep_text-q_text-modelqwenqwen3-embedding-06b-verbosetrue-batch_size64)
   - [QUDSim (Question Under Discussion Similarity)](#qudsim-question-under-discussion-similarity)
     - [`qudsim`](#qudsimdocuments-key)
 - [Citations](#citations)
@@ -34,13 +35,28 @@
 
 ## Installation
 
-Install via pip:
+Install via uv (recommended):
+
+```bash
+uv pip install diversity
+```
+
+Or via pip:
 
 ```bash
 pip install diversity
 ```
 
-Or from source:
+**From source (uv):**
+
+```bash
+git clone https://github.com/cshaib/diversity.git
+cd diversity
+uv sync           # installs all runtime dependencies
+uv sync --group dev  # also installs dev dependencies
+```
+
+**From source (pip):**
 
 ```bash
 git clone https://github.com/cshaib/diversity.git
@@ -222,7 +238,7 @@ print("Templates per Token:", tpt)
 You can also measure semantic diversity using *embedding*-based similarity. These scores compute distances between document embeddings to quantify how spread out or clustered the texts are:
 
 ```python
-from diversity.embedding import remote_clique, chamfer_dist
+from diversity.embedding import remote_clique, chamfer_dist, mauve_score
 
 texts = [
     "The quick brown fox jumps over the lazy dog.",
@@ -237,6 +253,15 @@ print(f"Remote Clique: {rc:.3f}")
 # Chamfer Distance
 cd = chamfer_dist(texts, model="Qwen/Qwen3-Embedding-0.6B")
 print(f"Chamfer Distance: {cd:.3f}")
+
+# MAUVE score (requires a reference distribution)
+reference_texts = [
+    "The fox leapt gracefully over the hound.",
+    "An agile fox cleared the sleeping dog.",
+    "Coffee and newspapers make a perfect morning."
+]
+mv = mauve_score(p_text=reference_texts, q_text=texts)
+print(f"MAUVE: {mv:.3f}")
 ```
 #### `remote_clique(data, model='Qwen/Qwen3-Embedding-0.6B', verbose=True, batch_size=64)`
 
@@ -262,6 +287,21 @@ print(f"Chamfer Distance: {cd:.3f}")
 -   **batch_size (int):**  Batch size for embedding (default:  `64`).
     
 -   **Returns:**  `float`  — average minimum pairwise cosine distance (sensitive to near-duplicates; higher = less redundancy).
+
+
+#### `mauve_score(p_text, q_text, model='Qwen/Qwen3-Embedding-0.6B', verbose=True, batch_size=64)`
+
+-   **p_text (list of str):** Reference texts (e.g. human-written).
+
+-   **q_text (list of str):** Generated texts to evaluate against the reference.
+
+-   **model (str):** Sentence-transformer model used to embed both distributions (default: `"Qwen/Qwen3-Embedding-0.6B"`).
+
+-   **verbose (bool):** Whether to show a progress bar during encoding (default: `True`).
+
+-   **batch_size (int):** Batch size for embedding (default: `64`).
+
+-   **Returns:** `float` — MAUVE score in [0, 1]. Higher means the generated distribution is closer to the reference (less divergence).
 
 ----------
 
@@ -348,16 +388,17 @@ url={https://openreview.net/forum?id=zFz1BJu211}
 ## Requirements
 
 -   Python 3.10-3.12
--   Core dependencies:
-    -   `numpy`
+-   [`uv`](https://docs.astral.sh/uv/) (recommended package manager) or pip
+-   Core dependencies (installed automatically):
     -   `nltk`
-    -   `scikit-learn`
--   For embedding-based metrics:
+    -   `rouge-score`
+    -   `evaluate`
+    -   `stanza` (POS tagging and language detection)
+-   For embedding-based metrics (installed automatically):
     -   `sentence-transformers`
-    -   `torch`
+    -   `mauve-text`
 -   For QUDSim:
-    -   `openai`
-    -   `tqdm`
+    -   `openai` (install separately: `uv pip install openai`)
 
 ----------
 

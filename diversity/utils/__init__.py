@@ -1,2 +1,6 @@
 from .memoize import memoized
-from .openai import GPT
+
+try:
+    from .openai import GPT
+except ImportError:
+    pass

@@ -1,4 +1,8 @@
-import openai
+try:
+    import openai
+except ImportError:
+    openai = None  # type: ignore[assignment]
+
 from pydantic import BaseModel
 import os
 
@@ -7,6 +11,11 @@ class GPT():
     Wrapper. Helps instantiate and make requests to openai clients.
     '''
     def __init__(self, gpt_model, key):
+        if openai is None:
+            raise ImportError(
+                "The 'openai' package is required for QUDSim. "
+                "Install it with: uv pip install openai"
+            )
         self.model = gpt_model
         openai.api_key = key
         self.client = openai.OpenAI()
